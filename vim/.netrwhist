@@ -1,0 +1,10 @@
+let g:netrw_dirhistmax  =10
+let g:netrw_dirhist_cnt =8
+let g:netrw_dirhist_1='/home/elmer/_project/72683/turnkey/build/board'
+let g:netrw_dirhist_2='/var/log'
+let g:netrw_dirhist_3='/home/elmer/_project/72683/turnkey/build/board'
+let g:netrw_dirhist_4='/home/elmer/_project/72683/turnkey/build/board/Qtplugins'
+let g:netrw_dirhist_5='/etc/network'
+let g:netrw_dirhist_6='/home/elmer/.config'
+let g:netrw_dirhist_7='/home/elmer'
+let g:netrw_dirhist_8='/home/elmer/.git'

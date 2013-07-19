@@ -1,0 +1,1 @@
+hints_man2.vba: call delete('/home/elmer/.vim/ftplugin/c/hints_man2.vim')
