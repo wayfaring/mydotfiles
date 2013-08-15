@@ -13,3 +13,5 @@ alias ..='cd ..'
 alias gdb='gdb --quiet'
 alias cscope='cscope -d'
 alias vi='vim'
+
+alias prjcreate='~/bin/prjcreate.sh'

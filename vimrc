@@ -17,15 +17,18 @@ if has("multi_byte")"<<<
     " CJK environment detection and corresponding setting
     if v:lang =~ "^zh_CN"
         " Use cp936 to support GBK, euc-cn == gb2312
-        set encoding=cp936
+        set encoding=utf-8
         set termencoding=cp936
         set fileencoding=cp936
     elseif v:lang =~ "^zh_TW""<<<
         " cp950, big5 or euc-tw
         " Are they equal to each other?
-        set encoding=big5
-        set termencoding=big5
-        set fileencoding=big5
+"        set encoding=big5
+"        set termencoding=big5
+"        set fileencoding=big5
+        set encoding=utf-8
+        set termencoding=utf-8
+        set fileencoding=utf-8
     elseif v:lang =~ "^ko"">>>
         "Copied from someone's dotfile, untested
         set encoding=euc-kr
@@ -51,18 +54,23 @@ endif">>>
 "--------------------------------------"
 "-----     Vim Settings           -----"
 "--------------------------------------"
+
+set path=.,,
+
 set nocompatible            " not compatible with vi, because this is Vim
 set history=50              " keep 50 lines of command line history
 
 " Switch syntax highlighting on, when the terminal has colors
 " Also switch on highlighting the last used search pattern.
-if &t_Co > 2
-    syntax on
-endif
+"if &t_Co > 2
+"    syntax on
+"endif
+
+syntax on
 
 colorscheme asmdev
 
-set encoding=utf-8
+"set encoding=utf-8
 set number
 
 "***** file attributes
@@ -86,8 +94,9 @@ set viminfo='20,\"50        " read/write a .viminfo file, don't store more
                             "
 " **** status line
 set laststatus=2            " always show a status-bar.
-set statusline=%<%t%h%m%r\ \ %a\ %{strftime(\"%c\")}%=0x%B\ 
+set statusline=%<%t%h%m%r\ \ %a\ [FORMAT=%{&ff}]\ [Type=%Y]%=0x%B\ 
                         \\ line:%l,\ \ col:%c%V\ %P
+"set statusline=%F%m%r%h%w\ [FORMAT=%{&ff}]\ [Type=%Y]\ line:%l,\ \ col:%c%V\ %P
 
 "set cmdheight=2
 set backspace=indent,eol,start  " allow backspacing over everything in insert mode
@@ -158,6 +167,7 @@ set ruler                   " show the cursor position all the time
 "******** search setting *******
 "
 set ignorecase              " ignore uppercase/lowercase in searching
+set smartcase
 "set hlsearch               " highlight the search result
 set incsearch               " do incremental searching
 "
@@ -214,7 +224,7 @@ map <C-n>w <ESC>:tabclose<CR>
 "## save the file
 map <C-n>s <ESC>:w<CR>
 
-nnoremap ss :buffers <BAR> let i = input("Buffer number: ") <BAR> execute "buffer " . i <CR>
+"nnoremap ss :buffers <BAR> let i = input("Buffer number: ") <BAR> execute "buffer " . i <CR>
 
 "*** Compiling and Executing ***
 " setting makeprg could issue "make" in vim command mode
@@ -223,7 +233,7 @@ set makeprg=make
 "this script use to excute make in vim and open quickfix window
 "nmap B :call Do_make()<CR>
 "nmap C :cclose<CR>
-function Do_make()
+function! Do_make()
 "   let filename = bufname("%")
 "   let suffix_pos = stridx(filename, ".c")
 "   if suffix_pos == -1  
@@ -245,7 +255,7 @@ execute "set asm=0"
 execute "set gdbprg=gdb"
 endfunction
 
-function Do_make_t()
+function! Do_make_t()
 execute "make clean; make"
 execute "copen"
 endfunction
@@ -261,9 +271,11 @@ endfunction
 "nmap <F3> :redir @a<CR>:g//<CR>:redir END<CR>:new<CR>:put! a<CR><CR>
 "nmap <F2> <ESC> :w <CR> :set makeprg=make\ %<<CR> :make<CR> :copen<CR> 
 nmap <F4> <ESC> :cclose <CR><CR>
-nmap <F5> <ESC> :wa<CR> :echo "make all" <CR> :call Do_make()<CR><CR>
-nmap <F6> <ESC> <CR> :call Do_GDB()<CR><CR>
-nmap <C-m><F5> <ESC> :echo "make clean all <CR> :call Do_make_t()<CR><CR>
+nmap <F5> <ESC><ESC>:call SaveSession()<CR>
+map <F6> <ESC><CR> :call LoadSession()<CR><CR>
+"nmap <F5> <ESC> :wa<CR> :echo "make all" <CR> :call Do_make()<CR><CR>
+"nmap <F6> <ESC> <CR> :call Do_GDB()<CR><CR>
+"nmap <C-m><F5> <ESC> :echo "make clean all <CR> :call Do_make_t()<CR><CR>
 
 let g:winManagerWindowLayout='FileExplorer|TagList'
 nmap wm <ESC> :WMToggle<CR>
@@ -346,6 +358,21 @@ let g:ctags_args='-I __declspec+'
 let g:ctags_regenerate=0
 let g:ctags_statusline=1
 
+function! UpdateTags()
+	echo "... Rebuilding tags\n"
+	call system("ctags -L cscope.files")
+endfunction
+
+if filereadable("./tags")
+	autocmd BufWritePost *.cpp,*.h,*.c :call UpdateTags()
+endif
+
+function! TagsCheck()
+if filereadable("./tags")
+	echo "./tags exists"
+endif
+endfunction
+
 "*** minibufexpl.vim ***
 let g:miniBufExplMapWindowNavVim = 1
 let g:miniBufExplMapWindowNavArrows = 1
@@ -390,7 +417,7 @@ augroup END
 
 autocmd newFileDetection
 
-function CheckFileType()
+function! CheckFileType()
     if exists("b:countCheck") == 0
         let b:countCheck = 0
     endif
@@ -405,7 +432,7 @@ function CheckFileType()
 endfunction
 
 autocmd BufWritePre,FileWritePre .vimrc mark s|call LastMod()|'s
-function LastMod()
+function! LastMod()
     let b:lastModline=line("$")
 
     execute "1," . b:lastModline . "g/^\" Last modified:/s/Last modified:.*/Last modified: " . strftime("%c")
@@ -442,6 +469,60 @@ hi TabLine      guifg=#90fff0 guibg=#2050d0     ctermfg=black ctermbg=white
 hi TabLineSel   guifg=#90fff0 guibg=#2050d0     ctermfg=white ctermbg=LightMagenta
 hi Function      term=bold ctermfg=Red
 
+"Set mapleader
+let mapleader = ","
+"Fast reloading of the .vimrc
+map <silent> <leader>src :source ~/.vimrc<cr>
+"Fast editing of .vimrc
+map <silent> <leader>erc :e ~/.vimrc<cr>
+"When .vimrc is edited, reload it
+autocmd! bufwritepost .vimrc source ~/.vimrc 
+
+""""""""""""""""""""""""""""""
+" lookupfile setting
+""""""""""""""""""""""""""""""
+let g:LookupFile_MinPatLength = 2               "忙聹聙氓掳聭猫戮聯氓聟楼2盲赂陋氓颅聴莽卢娄忙聣聧氓录聙氓搂聥忙聼楼忙聣戮
+let g:LookupFile_PreserveLastPattern = 0        "盲赂聧盲驴聺氓颅聵盲赂聤忙卢隆忙聼楼忙聣戮莽職聞氓颅聴莽卢娄盲赂虏
+let g:LookupFile_PreservePatternHistory = 1     "盲驴聺氓颅聵忙聼楼忙聣戮氓聨聠氓聫虏
+let g:LookupFile_AlwaysAcceptFirst = 1          "氓聸聻猫陆娄忙聣聯氓录聙莽卢卢盲赂聙盲赂陋氓聦鹿茅聟聧茅隆鹿莽聸庐
+let g:LookupFile_AllowNewFiles = 0              "盲赂聧氓聟聛猫庐赂氓聢聸氓禄潞盲赂聧氓颅聵氓聹篓莽職聞忙聳聡盲禄露
+if filereadable("./filenametags")                "猫庐戮莽陆庐tag忙聳聡盲禄露莽職聞氓聬聧氓颅聴
+	let g:LookupFile_TagExpr = '"./filenametags"'
+endif
+nmap <silent> <leader>lk <Plug>LookupFile<cr>   "忙聵聽氓掳聞LookupFile盲赂潞,lk
+nmap <silent> <leader>ll :LUBufs<cr>            "忙聵聽氓掳聞LUBufs盲赂潞,ll
+nmap <silent> <leader>lw :LUWalk<cr>            "忙聵聽氓掳聞LUWalk盲赂潞,lw 
+
+" lookup file tag file
+"let g:LookupFile_TagExpr = '"filenametags"' 
+"
+"---------------------------------
+"For session setting
+"---------------------------------
+"autocmd VimEnter * call LoadSession() 
+"autocmd VimLeave * call SaveSession()
+function! SaveSession()
+	execute 'mksession! ./workspace.session'
+	execute 'wviminfo! ./workspace.viminfo'
+endfunction
+
+function! LoadSession()
+	execute 'source ./workspace.session'
+	execute 'rviminfo ./workspace.viminfo'
+endfunction
+
+highlight LineNr ctermfg=gray ctermbg=black
+
+"function QfMakeConv()
+"	let qflist = getqflist()
+"	for i in qflist
+"		let i.text = iconv(i.text, "cp936", "utf-8")
+"	endfor
+"	call setqflist(qflist)
+"endfunction
+"
+"au QuickfixCmdPost make call QfMakeConv()
+
 " Modeline  Customerized
 " vim: set fdm=marker ts=4:
-" Last modified: Thu 21 Apr 2011 03:17:41 PM CST
+" Last modified: Wed, Aug 07, 2013 10:25:27 AM
